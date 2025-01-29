@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -47,9 +48,15 @@ namespace CSharpImplementation
             }
         }
 
-        public Task<IEnumerable<DBModel>> GetAllSync()
+        public async Task<IEnumerable<DBModel>> GetAllSync()
         {
-            throw new NotImplementedException();
+            try 
+            { 
+                return await _context.DBModels.ToListAsync(); 
+            } catch (Exception ex) 
+            {
+                throw new Exception(ex.Message);
+            };
         }
 
         public async Task<DBModel?> GetById(string id)
@@ -65,18 +72,28 @@ namespace CSharpImplementation
             }
         }
 
-        public async Task Update(string id, DBModel Entity)
+        public async Task Update(string id, DBModel entity)
         {
-            try 
+            try
             {
                 var existingEntity = await _context.DBModels.FindAsync(id);
-                _context.Entry(existingEntity).CurrentValues.SetValues(Entity);
-                await _context.SaveChangesAsync();
+                if (existingEntity == null)
+                {
+                    throw new Exception($"Entity with ID {id} not found.");
+                }
 
-            } catch(Exception ex) 
+                existingEntity.Name = entity.Name;
+                existingEntity.Type = entity.Type;
+                existingEntity.Info = entity.Info;
+
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"Entity {id} updated successfully!");
+            }
+            catch (Exception ex)
             {
                 throw new Exception($"Error updating entity: {ex.Message}");
             }
         }
+
     }
 }
