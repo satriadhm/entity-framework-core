@@ -1,22 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace CSharpImplementation
 {
-    internal class DBModel
+    public class DBModel
     {
         [Key]
-        public int Id { get; set; }
+        public string Id { get; set; }
 
         [Required]
+        [StringLength(100)]
         public string Name { get; set; }
+
+        [Required]
+        [StringLength(50)]
         public string Type { get; set; }
 
+        [StringLength(255)]
         public string Info { get; set; }
-
     }
 }
