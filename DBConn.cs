@@ -1,46 +1,59 @@
-﻿using MySql.Data;
-using MySql.Data.MySqlClient;
+﻿using MySql.Data.MySqlClient;
+using dotenv.net;
+using System;
+using System.Collections.Generic;
 
 namespace Data
 {
-    public class DBConnection
+    public class DBConnection : IDisposable
     {
-        private DBConnection()
-        {
-        }
+        private static DBConnection? _instance;
+        private MySqlConnection? _connection;
 
-        public string Server { get; set; }
-        public string DatabaseName { get; set; }
-        public string UserName { get; set; }
-        public string Password { get; set; }
+        private DBConnection() { }
 
-        public MySqlConnection Connection { get; set; }
-
-        private static DBConnection _instance = null;
         public static DBConnection Instance()
         {
-            if (_instance == null)
-                _instance = new DBConnection();
-            return _instance;
+            return _instance ??= new DBConnection();
         }
 
-        public bool IsConnect()
+        public MySqlConnection? Connection
         {
-            if (Connection == null)
+            get
             {
-                if (String.IsNullOrEmpty(DatabaseName))
-                    return false;
-                string connstring = string.Format("Server={0}; database={1}; UID={2}; password={3}", Server, DatabaseName, UserName, Password);
-                Connection = new MySqlConnection(connstring);
-                Connection.Open();
-            }
+                if (_connection == null)
+                {
+                    DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { "./.env" }));
 
-            return true;
+                    IDictionary<string, string> envVars = DotEnv.Read();
+                    Console.WriteLine("Loaded environment variables:");
+                    foreach (var kvp in envVars)
+                    {
+                        Console.WriteLine($"{kvp.Key} = {kvp.Value}");
+                    }
+
+                    string server = envVars["DB_SERVER"];
+                    string database = envVars["DB_NAME"];
+                    string user = envVars["DB_USER"];
+                    string password = envVars["DB_PASSWORD"];
+
+                    string connString = $"Server={server};Database={database};User={user};Password={password};SslMode=none;";
+                    _connection = new MySqlConnection(connString);
+                    _connection.Open();
+                }
+                return _connection;
+            }
         }
 
         public void Close()
         {
-            Connection.Close();
+            _connection?.Close();
+            _connection = null;
+        }
+
+        public void Dispose()
+        {
+            Close();
         }
     }
 }
